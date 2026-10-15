@@ -1,0 +1,17 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Test (Debug)",
+            "type": "node-terminal",
+            "request": "launch",
+            "command": "cmake -S \"${workspaceFolder}\\test\" -B \"${workspaceFolder}\\build\\test-debug\" -DCMAKE_BUILD_TYPE=Debug"
+        },
+        {
+            "name": "Test (Release)",
+            "type": "node-terminal",
+            "request": "launch",
+            "command": "cmake -S \"${workspaceFolder}\\test\" -B \"${workspaceFolder}\\build\\test-release\" -DCMAKE_BUILD_TYPE=Release"
+        }
+    ]
+}
