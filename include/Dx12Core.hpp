@@ -11,7 +11,7 @@
 
 #pragma comment(lib, "d3d12.lib")
 #pragma comment(lib, "dxgi.lib")
-#pragma comment(lib, "dxgiuid.lib")
+#pragma comment(lib, "dxguid.lib")
 
 using namespace Microsoft::WRL;
 
