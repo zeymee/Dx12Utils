@@ -107,3 +107,21 @@ void throwIfFailed(HRESULT hr)
         throw std::runtime_error("HRESULT failed");
     }
 }
+
+ComPtr<ID3D12Device14> &Dx12Core::getDevice()
+{ return dx12CoreMembers.device; }
+
+ComPtr<IDXGIFactory6> &Dx12Core::getFactory()
+{ return dx12CoreMembers.factory; }
+
+ComPtr<IDXGIAdapter4> &Dx12Core::getAdapter()
+{ return dx12CoreMembers.adapter; }
+
+ComPtr<ID3D12CommandQueue> &Dx12Core::getDirectQueue()
+{ return dx12CoreMembers.directQueue; }
+
+ComPtr<ID3D12CommandQueue> &Dx12Core::getComputeQueue()
+{ return dx12CoreMembers.computeQueue; }
+
+ComPtr<ID3D12CommandQueue> &Dx12Core::getCopyQueue()
+{ return dx12CoreMembers.copyQueue; }
