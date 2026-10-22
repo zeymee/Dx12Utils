@@ -6,7 +6,6 @@ ComPtr<ID3D12Resource> createResource(
     D3D12_RESOURCE_STATES initialState
 )
 {
-
     sg::dxTypes::Resource_Desc resDesc(sizeInBytes, D3D12_RESOURCE_DIMENSION_BUFFER);
     sg::dxTypes::Heap_Props heapProps(heapType);
 

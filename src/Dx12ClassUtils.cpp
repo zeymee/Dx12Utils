@@ -51,13 +51,12 @@ void CmdListManager::reset()
 
 void RootSignatureBuilder::addSRVDescriptorRange(uint32_t numDescriptors, uint32_t baseShaderRegister, uint32_t registerSpace, D3D12_SHADER_VISIBILITY shaderVisibility)
 {
-    D3D12_DESCRIPTOR_RANGE1 srvRange{};
-    srvRange.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-    srvRange.NumDescriptors = numDescriptors;
-    srvRange.BaseShaderRegister = baseShaderRegister;
-    srvRange.RegisterSpace = registerSpace;
-    srvRange.Flags = D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC;
-    descriptorRanges_.push_back({ srvRange, shaderVisibility });
+    descriptorRanges_.push_back(RootParameterDesc(
+        0,
+        baseShaderRegister,
+        registerSpace,
+        shaderVisibility
+    ));
 }
 
 void RootSignatureBuilder::addCBVDescriptorRange(
@@ -66,13 +65,12 @@ void RootSignatureBuilder::addCBVDescriptorRange(
     uint32_t registerSpace,
     D3D12_SHADER_VISIBILITY shaderVisibility)
 {
-    D3D12_DESCRIPTOR_RANGE1 cbvRange{};
-    cbvRange.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
-    cbvRange.NumDescriptors = numDescriptors;
-    cbvRange.BaseShaderRegister = baseShaderRegister;
-    cbvRange.RegisterSpace = registerSpace;
-    cbvRange.Flags = D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC;
-    descriptorRanges_.push_back({ cbvRange, shaderVisibility });
+    descriptorRanges_.push_back(RootParameterDesc(
+        0,
+        baseShaderRegister,
+        registerSpace,
+        shaderVisibility
+    ));
 }
 
 void RootSignatureBuilder::addUAVDescriptorRange(
@@ -81,13 +79,22 @@ void RootSignatureBuilder::addUAVDescriptorRange(
     uint32_t registerSpace,
     D3D12_SHADER_VISIBILITY shaderVisibility)
 {
-    D3D12_DESCRIPTOR_RANGE1 uavRange{};
-    uavRange.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_UAV;
-    uavRange.NumDescriptors = numDescriptors;
-    uavRange.BaseShaderRegister = baseShaderRegister;
-    uavRange.RegisterSpace = registerSpace;
-    uavRange.Flags = D3D12_DESCRIPTOR_RANGE_FLAG_DATA_VOLATILE;
-    descriptorRanges_.push_back({ uavRange, shaderVisibility });
+    descriptorRanges_.push_back(RootParameterDesc(
+        0,
+        baseShaderRegister,
+        registerSpace,
+        shaderVisibility
+    ));
+}
+
+void RootSignatureBuilder::add32BitConstants(uint32_t num32BitValues, uint32_t shaderRegister, uint32_t registerSpace, D3D12_SHADER_VISIBILITY shaderVisibility)
+{
+    descriptorRanges_.push_back(RootParameterDesc(
+        num32BitValues,
+        shaderRegister,
+        registerSpace,
+        shaderVisibility
+    ));
 }
 
 void RootSignatureBuilder::addSamplerDescriptor(uint32_t shaderRegister, uint32_t registerSpace)
@@ -111,22 +118,19 @@ void RootSignatureBuilder::addSamplerDescriptor(uint32_t shaderRegister, uint32_
 
 ComPtr<ID3D12RootSignature> RootSignatureBuilder::buildRootSignature(D3D12_ROOT_SIGNATURE_FLAGS flags)
 {
-    std::vector<D3D12_ROOT_PARAMETER1> rootParams(descriptorRanges_.size());
-    for(uint32_t i = 0; i < descriptorRanges_.size(); i++)
-    {
-        D3D12_ROOT_PARAMETER1 rootParam{};
-        rootParam.ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-        rootParam.DescriptorTable.NumDescriptorRanges = 1;
-        rootParam.DescriptorTable.pDescriptorRanges = &descriptorRanges_[i].descriptorRange;
-        rootParam.ShaderVisibility = descriptorRanges_[i].shaderVisibility;
-        rootParams[i] = rootParam;
-    }
+    std::vector<RootSignatureBuilder::RootParameter> rootParams;
+    for(auto const& desc : descriptorRanges_)
+        rootParams.push_back(RootSignatureBuilder::RootParameter(desc));
+
+    std::vector<D3D12_ROOT_PARAMETER1> rootParameters;
+    for(auto const& rootParam : rootParams)
+        rootParameters.push_back(rootParam.rootParameter);
 
     D3D12_VERSIONED_ROOT_SIGNATURE_DESC versionedRootSignatureDesc{};
     versionedRootSignatureDesc.Version = D3D_ROOT_SIGNATURE_VERSION_1_2;
-    versionedRootSignatureDesc.Desc_1_2.NumParameters = static_cast<UINT>(rootParams.size());
-    versionedRootSignatureDesc.Desc_1_2.pParameters = rootParams.data();
-    versionedRootSignatureDesc.Desc_1_2.NumStaticSamplers = static_cast<UINT>(staticSamplers_.size());
+    versionedRootSignatureDesc.Desc_1_2.NumParameters = static_cast<uint32_t>(rootParameters.size());
+    versionedRootSignatureDesc.Desc_1_2.pParameters = rootParameters.data();
+    versionedRootSignatureDesc.Desc_1_2.NumStaticSamplers = static_cast<uint32_t>(staticSamplers_.size());
     versionedRootSignatureDesc.Desc_1_2.pStaticSamplers = staticSamplers_.data();
     versionedRootSignatureDesc.Desc_1_2.Flags = flags;
 

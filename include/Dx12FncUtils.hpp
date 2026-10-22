@@ -138,11 +138,27 @@ inline void recordTransitionResourceState(
     const ComPtr<ID3D12Resource>& resource,
     D3D12_RESOURCE_STATES stateBefore,
     D3D12_RESOURCE_STATES stateAfter
-);
+)
+{
+    recordTransitionResourceState(
+        pCmdList.Get(),
+        resource,
+        stateBefore,
+        stateAfter
+    );
+}
 
 inline void recordTransitionResourceState(
     CmdListManager& cmdListManager,
     const ComPtr<ID3D12Resource>& resource,
     D3D12_RESOURCE_STATES stateBefore,
     D3D12_RESOURCE_STATES stateAfter
-);
+)
+{
+    recordTransitionResourceState(
+        cmdListManager.operator->(),
+        resource,
+        stateBefore,
+        stateAfter
+    );
+}
