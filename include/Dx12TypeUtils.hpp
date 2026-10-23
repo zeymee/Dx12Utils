@@ -354,7 +354,7 @@ namespace sg::dxTypes
 
 	struct GenericData
 	{
-		const void *pData{nullptr};
+		const void* pData{nullptr};
 		size_t byteSize{0};
 	};
 }

@@ -42,6 +42,7 @@ void Dx12CoreMembers::pullDebugMessages()
             std::wcout << L"Dx12 Debug Message: " << messages->pDescription << "\n";
         }
     }
+    infoQueue->ClearStoredMessages();
 }
 
 Dx12CoreMembers::Dx12CoreMembers()

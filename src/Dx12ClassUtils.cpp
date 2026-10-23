@@ -1,4 +1,6 @@
 #include "Dx12ClassUtils.hpp"
+#include <sstream>
+
 
 void CmdListManager::init()
 {
@@ -156,4 +158,89 @@ ComPtr<ID3D12RootSignature> RootSignatureBuilder::buildRootSignature(D3D12_ROOT_
         IID_PPV_ARGS(&rootSignature)
     ));
     return rootSignature;
+}
+
+Dx12ShaderCompile::Dx12ShaderCompile()
+{
+    throwIfFailed(DxcCreateInstance(CLSID_DxcUtils, IID_PPV_ARGS(&utils)));
+    throwIfFailed(DxcCreateInstance(CLSID_DxcCompiler, IID_PPV_ARGS(&compiler)));
+    throwIfFailed(DxcCreateInstance(CLSID_DxcLibrary, IID_PPV_ARGS(&library)));
+    throwIfFailed(library->CreateIncludeHandler(&includeHandler));
+}
+
+ComPtr<IDxcBlob> Dx12ShaderCompile::loadFromFile(
+    const std::wstring &filePath,
+    const std::wstring &entryPoint,
+    const ShaderTarget target,
+    const ShaderFlags flag)
+{
+    std::wstring profile = L"vs_6_6";
+    switch(target)
+    {
+        case ShaderTarget::eVertex:
+            profile = L"vs_6_6";
+            break;
+        case ShaderTarget::ePixel:
+            profile = L"ps_6_6";
+            break;
+        case ShaderTarget::eCompute:
+            profile = L"cs_6_6";
+            break;
+        case ShaderTarget::eDomain:
+            profile = L"ds_6_6";
+            break;
+    }
+
+    std::vector<const wchar_t*> args;
+    args.push_back(L"-E");
+    args.push_back(entryPoint.c_str());
+    args.push_back(L"-T");
+    args.push_back(profile.c_str());
+
+    if(flag & ShaderFlags::eDebug)
+    {
+        args.push_back(L"-Zi");
+        args.push_back(L"-Qembed_debug");
+    }
+    if(flag & ShaderFlags::eSkipOptimization)
+        args.push_back(L"-Od");
+    if(flag & ShaderFlags::eOptimizationLevel0)
+        args.push_back(L"-O0");
+    if(flag & ShaderFlags::eOptimizationLevel1)
+        args.push_back(L"-O1");
+    if(flag & ShaderFlags::eOptimizationLevel2)
+        args.push_back(L"-O2");
+    if(flag & ShaderFlags::eOptimizationLevel3)
+        args.push_back(L"-O3");
+
+    ComPtr<IDxcBlobEncoding> source;
+    throwIfFailed(utils->LoadFile(filePath.c_str(), nullptr, &source));
+
+    DxcBuffer buffer{};
+    buffer.Ptr = source->GetBufferPointer();
+    buffer.Size = source->GetBufferSize();
+    buffer.Encoding = DXC_CP_ACP;
+
+    ComPtr<IDxcResult> result;
+    throwIfFailed(compiler->Compile(
+        &buffer,
+        args.data(),
+        static_cast<uint32_t>(args.size()),
+        includeHandler.Get(),
+        IID_PPV_ARGS(&result)
+    ));
+
+    ComPtr<IDxcBlobUtf8> errors;
+    result->GetOutput(DXC_OUT_ERRORS, IID_PPV_ARGS(&errors), nullptr);
+    if(errors && errors->GetStringLength() > 0)
+        std::cout << errors->GetStringPointer() << std::endl;
+
+    HRESULT status = S_OK;
+    throwIfFailed(result->GetStatus(&status));
+    if(FAILED(status))
+        throw std::runtime_error("Failed to compile shader.");
+
+    ComPtr<IDxcBlob> shader;
+    throwIfFailed(result->GetOutput(DXC_OUT_OBJECT, IID_PPV_ARGS(&shader), nullptr));
+    return shader;
 }

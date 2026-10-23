@@ -1,5 +1,6 @@
 #pragma once
 #include "Dx12Core.hpp"
+#include <dxcapi.h>
 
 #include <vector>
 #include <string>
@@ -108,4 +109,45 @@ public:
     void addSamplerDescriptor(uint32_t shaderRegister, uint32_t registerSpace = 0);
 
     ComPtr<ID3D12RootSignature> buildRootSignature(D3D12_ROOT_SIGNATURE_FLAGS flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+};
+
+enum class ShaderTarget
+{
+    eVertex,
+    ePixel,
+    eCompute,
+    eDomain
+};
+
+enum ShaderFlags
+{
+    eNone = 0,
+    eDebug = 1 << 0,
+    eSkipOptimization = 1 << 1,
+    eOptimizationLevel0 = 1 << 2,
+    eOptimizationLevel1 = 1 << 3,
+    eOptimizationLevel2 = 1 << 4,
+    eOptimizationLevel3 = 1 << 5
+};
+
+inline ShaderFlags operator|(ShaderFlags a, ShaderFlags b)
+{ return static_cast<ShaderFlags>(static_cast<int>(a) | static_cast<int>(b)); }
+
+class Dx12ShaderCompile
+{
+    ComPtr<IDxcUtils> utils;
+    ComPtr<IDxcCompiler3> compiler;
+    ComPtr<IDxcLibrary> library;
+    ComPtr<IDxcIncludeHandler> includeHandler;
+
+public:
+
+
+    Dx12ShaderCompile();
+    
+    ComPtr<IDxcBlob> loadFromFile(const std::wstring& filePath,
+        const std::wstring& entryPoint,
+        const ShaderTarget target,
+        const ShaderFlags flag = ShaderFlags::eNone
+        );
 };
