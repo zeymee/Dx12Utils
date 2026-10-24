@@ -28,6 +28,7 @@ CmdListManager::CmdListManager(ComPtr<ID3D12PipelineState> pso) : pso_(pso)
 void CmdListManager::execute()
 {
     wait();
+    fence_->Signal(0);
     localQueue_->ExecuteCommandLists(1, reinterpret_cast<ID3D12CommandList* const *>(cmdList_.GetAddressOf()));
     localQueue_->Signal(fence_.Get(), 1);
 }
@@ -35,14 +36,16 @@ void CmdListManager::execute()
 void CmdListManager::close()
 { throwIfFailed(cmdList_->Close()); }
 
+CmdListManager::clStatus CmdListManager::getStatus() const
+{ return fence_->GetCompletedValue() == 1 ? clStatus::eIdle : clStatus::eBusy; }
+
 void CmdListManager::wait()
 {
-    if(fence_->GetCompletedValue() == 1)
+    if(fence_->GetCompletedValue() != 1)
     {
         fence_->SetEventOnCompletion(1, fenceEvent_);
         WaitForSingleObject(fenceEvent_, INFINITE);
     }
-    fence_->Signal(0);
 }
 
 void CmdListManager::reset()

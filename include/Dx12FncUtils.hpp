@@ -77,6 +77,25 @@ inline void recordUploadToDefaultResource(
     );
 }
 
+inline void recordUploadToDefaultResource(
+    CmdListManager& cmdListManager,
+    const ComPtr<ID3D12Resource>& srcResource,
+    const ComPtr<ID3D12Resource>& dstResource,
+    size_t byteSize,
+    size_t srcOffset = 0,
+    size_t dstOffset = 0
+)
+{
+    recordUploadToDefaultResource(
+        cmdListManager.operator->(),
+        srcResource,
+        dstResource,
+        byteSize,
+        srcOffset,
+        dstOffset
+    );
+}
+
 // Assumes that the srcResource contains the data in a 1D layout suitable for copying to a 2D resource.
 void recordUploadToDefaultResource2D(
     ID3D12GraphicsCommandList* pCmdList,

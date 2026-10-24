@@ -20,6 +20,12 @@ class CmdListManager
     void init();
 
 public:
+    enum clStatus : bool
+    {
+        eBusy = true,
+        eIdle = false
+    };
+
     ~CmdListManager();
     CmdListManager(D3D12_COMMAND_LIST_TYPE type = D3D12_COMMAND_LIST_TYPE_DIRECT);
     CmdListManager(ComPtr<ID3D12PipelineState> pso);
@@ -28,6 +34,7 @@ public:
 
     void execute();
     void close();
+    clStatus getStatus() const;
     void wait();
     void reset();
 };
@@ -141,8 +148,6 @@ class Dx12ShaderCompile
     ComPtr<IDxcIncludeHandler> includeHandler;
 
 public:
-
-
     Dx12ShaderCompile();
     
     ComPtr<IDxcBlob> loadFromFile(const std::wstring& filePath,
